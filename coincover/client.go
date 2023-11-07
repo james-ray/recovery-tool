@@ -3,7 +3,6 @@ package coincover
 import (
 	"archive/zip"
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"github.com/james-ray/recovery-tool/common"
 	"github.com/james-ray/recovery-tool/utils"
@@ -12,15 +11,7 @@ import (
 	"os"
 )
 
-func MakeZipFile(userPassphraseStr string, hbcPassphraseStr string, pubkeyHex, userMnemonic string, hbcMnemonics []string, saveFilePath string) (*os.File, error) {
-	userPassphrase, err := hex.DecodeString(userPassphraseStr)
-	if err != nil {
-		return nil, err
-	}
-	hbcPassphrase, err := hex.DecodeString(hbcPassphraseStr)
-	if err != nil {
-		return nil, err
-	}
+func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userMnemonic string, hbcMnemonics []string, saveFilePath string) (*os.File, error) {
 	archive, err := os.Create(saveFilePath)
 	if err != nil {
 		return nil, err
@@ -81,15 +72,7 @@ func readAll(file *zip.File) ([]byte, error) {
 	return content, nil
 }
 
-func ParseFile(zipFilePath string, privKeyHex string, userPassphraseStr string, hbcPassphraseStr string) (map[string]string, error) {
-	userPassphrase, err := hex.DecodeString(userPassphraseStr)
-	if err != nil {
-		return nil, err
-	}
-	hbcPassphrase, err := hex.DecodeString(hbcPassphraseStr)
-	if err != nil {
-		return nil, err
-	}
+func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphrase []byte) (map[string]string, error) {
 	zf, err := zip.OpenReader(zipFilePath)
 	if err != nil {
 		return nil, err

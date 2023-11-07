@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/james-ray/recovery-tool/coincover"
 	"os"
@@ -25,7 +26,11 @@ func main() {
 		fmt.Println(len(string(pubkeyBytes)))
 		fmt.Println(len(pubkeyBytes))
 		fmt.Printf("%x \n", pubkeyBytes)*/
-		_, err = coincover.MakeZipFile(os.Args[3], os.Args[4], string(pubkeyBytes), os.Args[6], os.Args[8:], os.Args[2])
+		hbcPasswdBytes, err := hex.DecodeString(os.Args[4])
+		if err != nil {
+			panic(err)
+		}
+		_, err = coincover.MakeZipFile([]byte(os.Args[3]), hbcPasswdBytes, string(pubkeyBytes), os.Args[6], os.Args[8:], os.Args[2])
 		if err != nil {
 			panic(err)
 		}
@@ -43,7 +48,11 @@ func main() {
 		fmt.Println(len(string(privkeyBytes)))
 		fmt.Println(len(privkeyBytes))
 		fmt.Printf("%x \n", privkeyBytes)*/
-		d, err := coincover.ParseFile(os.Args[2], string(privkeyBytes), os.Args[3], os.Args[4])
+		hbcPasswdBytes, err := hex.DecodeString(os.Args[4])
+		if err != nil {
+			panic(err)
+		}
+		d, err := coincover.ParseFile(os.Args[2], string(privkeyBytes), []byte(os.Args[3]), hbcPasswdBytes)
 		if err != nil {
 			panic(err)
 		}
