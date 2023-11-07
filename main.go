@@ -30,7 +30,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		_, err = coincover.MakeZipFile([]byte(os.Args[3]), hbcPasswdBytes, string(pubkeyBytes), os.Args[6], os.Args[8:], os.Args[2])
+		_, err = coincover.MakeZipFile([]byte(os.Args[3]), hbcPasswdBytes, string(pubkeyBytes), os.Args[6], os.Args[7:], os.Args[2])
 		if err != nil {
 			panic(err)
 		}
