@@ -3,6 +3,7 @@ package coincover
 import (
 	"archive/zip"
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"github.com/james-ray/recovery-tool/common"
 	"github.com/james-ray/recovery-tool/utils"
@@ -31,7 +32,7 @@ func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userMnemonic s
 	if err != nil {
 		return nil, err
 	}
-	bs := bytes.NewBuffer(encryptedMnenomic)
+	bs := bytes.NewBufferString(hex.EncodeToString(encryptedMnenomic))
 	if _, err = io.Copy(w1, bs); err != nil {
 		return nil, err
 	}
@@ -49,7 +50,7 @@ func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userMnemonic s
 		if err != nil {
 			return nil, err
 		}
-		bs = bytes.NewBuffer(encryptedMnenomic)
+		bs = bytes.NewBufferString(hex.EncodeToString(encryptedMnenomic))
 		if _, err = io.Copy(w1, bs); err != nil {
 			return nil, err
 		}
@@ -85,9 +86,17 @@ func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphr
 		if err != nil {
 			return nil, err
 		}
+		fileStr := string(fileBytes)
+		textBytes, err := hex.DecodeString(fileStr)
+		if err != nil {
+			return nil, err
+		}
+		if err != nil {
+			return nil, err
+		}
 		//fmt.Printf("=%s\n", file.Name)
 		//fmt.Printf("%x\n\n", fileBytes) // file content
-		encryptedBytes, err := common.RSADecryptFromHexPrivkey(fileBytes, privKeyHex)
+		encryptedBytes, err := common.RSADecryptFromHexPrivkey(textBytes, privKeyHex)
 		if err != nil {
 			return nil, err
 		}
