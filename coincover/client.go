@@ -11,7 +11,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"strings"
 )
 
 func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userPrivateSlice string, hbcPrivateSlices []string, chaincodes []string, ownerPubkeySlices []string, saveFilePath string) (*os.File, error) {
@@ -40,9 +39,6 @@ func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userPrivateSli
 	}
 
 	fileName := "chaincodes"
-	if len(hbcPassphrase) == 0 {
-		fileName += "_hbc"
-	}
 	w1, err = zipWriter.Create(fileName)
 	if err != nil {
 		return nil, err
@@ -68,9 +64,6 @@ func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userPrivateSli
 	}
 
 	fileName = "pubkeys"
-	if len(hbcPassphrase) == 0 {
-		fileName += "_hbc"
-	}
 	w1, err = zipWriter.Create(fileName)
 	if err != nil {
 		return nil, err
@@ -96,9 +89,6 @@ func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userPrivateSli
 
 	for i := 0; i < len(hbcPrivateSlices); i++ {
 		fileName = fmt.Sprintf("hbc.encrypted.%d", i)
-		if len(hbcPassphrase) == 0 {
-			fileName += "_hbc"
-		}
 		w1, err = zipWriter.Create(fileName)
 		if err != nil {
 			return nil, err
@@ -169,17 +159,6 @@ func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphr
 				return nil, err
 			}
 			dataMap["user"] = string(plainBytes)
-		} else if strings.Contains(file.Name, "chaincodes") {
-			if len(hbcPassphrase) > 0 {
-				plainBytes, err := utils.AesGcmDecrypt(hbcPassphrase, encryptedBytes)
-				if err != nil {
-					return nil, err
-				}
-				dataMap["user"] = string(plainBytes)
-			} else {
-
-			}
-
 		} else {
 			if len(hbcPassphrase) > 0 {
 				plainBytes, err := utils.AesGcmDecrypt(hbcPassphrase, encryptedBytes)
