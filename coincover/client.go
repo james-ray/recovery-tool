@@ -4,15 +4,17 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/james-ray/recovery-tool/common"
 	"github.com/james-ray/recovery-tool/utils"
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
-func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userMnemonic string, hbcMnemonics []string, saveFilePath string) (*os.File, error) {
+func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userPrivateSlice string, hbcPrivateSlices []string, chaincodes []string, ownerPubkeySlices []string, saveFilePath string) (*os.File, error) {
 	archive, err := os.Create(saveFilePath)
 	if err != nil {
 		return nil, err
@@ -24,33 +26,94 @@ func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userMnemonic s
 	if err != nil {
 		return nil, err
 	}
-	encryptedMnenomic, err := utils.AesGcmEncrypt(userPassphrase, []byte(userMnemonic))
+	encryptedPrivkeySlice, err := utils.AesGcmEncrypt(userPassphrase, []byte(userPrivateSlice))
 	if err != nil {
 		return nil, err
 	}
-	encryptedMnenomic, err = common.RSAEncryptFromHexPubkey(encryptedMnenomic, pubkeyHex)
+	encryptedPrivkeySlice, err = common.RSAEncryptFromHexPubkey(encryptedPrivkeySlice, pubkeyHex)
 	if err != nil {
 		return nil, err
 	}
-	bs := bytes.NewBufferString(hex.EncodeToString(encryptedMnenomic))
+	bs := bytes.NewBufferString(hex.EncodeToString(encryptedPrivkeySlice))
 	if _, err = io.Copy(w1, bs); err != nil {
 		return nil, err
 	}
 
-	for i := 0; i < len(hbcMnemonics); i++ {
-		w1, err = zipWriter.Create(fmt.Sprintf("hbc.encrypted.%d", i))
+	fileName := "chaincodes"
+	if len(hbcPassphrase) == 0 {
+		fileName += "_hbc"
+	}
+	w1, err = zipWriter.Create(fileName)
+	if err != nil {
+		return nil, err
+	}
+	chaincodesBytes, err := json.Marshal(chaincodes)
+	if err != nil {
+		return nil, err
+	}
+	if len(hbcPassphrase) > 0 {
+		encryptedPrivkeySlice, err = utils.AesGcmEncrypt(hbcPassphrase, chaincodesBytes)
 		if err != nil {
 			return nil, err
 		}
-		encryptedMnenomic, err = utils.AesGcmEncrypt(hbcPassphrase, []byte(hbcMnemonics[i]))
+	}
+
+	encryptedPrivkeySlice, err = common.RSAEncryptFromHexPubkey(encryptedPrivkeySlice, pubkeyHex)
+	if err != nil {
+		return nil, err
+	}
+	bs = bytes.NewBufferString(hex.EncodeToString(encryptedPrivkeySlice))
+	if _, err = io.Copy(w1, bs); err != nil {
+		return nil, err
+	}
+
+	fileName = "pubkeys"
+	if len(hbcPassphrase) == 0 {
+		fileName += "_hbc"
+	}
+	w1, err = zipWriter.Create(fileName)
+	if err != nil {
+		return nil, err
+	}
+	pubkeysBytes, err := json.Marshal(ownerPubkeySlices)
+	if err != nil {
+		return nil, err
+	}
+	if len(hbcPassphrase) > 0 {
+		encryptedPrivkeySlice, err = utils.AesGcmEncrypt(hbcPassphrase, pubkeysBytes)
 		if err != nil {
 			return nil, err
 		}
-		encryptedMnenomic, err = common.RSAEncryptFromHexPubkey(encryptedMnenomic, pubkeyHex)
+	}
+	encryptedPrivkeySlice, err = common.RSAEncryptFromHexPubkey(encryptedPrivkeySlice, pubkeyHex)
+	if err != nil {
+		return nil, err
+	}
+	bs = bytes.NewBufferString(hex.EncodeToString(encryptedPrivkeySlice))
+	if _, err = io.Copy(w1, bs); err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < len(hbcPrivateSlices); i++ {
+		fileName = fmt.Sprintf("hbc.encrypted.%d", i)
+		if len(hbcPassphrase) == 0 {
+			fileName += "_hbc"
+		}
+		w1, err = zipWriter.Create(fileName)
 		if err != nil {
 			return nil, err
 		}
-		bs = bytes.NewBufferString(hex.EncodeToString(encryptedMnenomic))
+		if len(hbcPassphrase) > 0 {
+			encryptedPrivkeySlice, err = utils.AesGcmEncrypt(hbcPassphrase, []byte(hbcPrivateSlices[i]))
+			if err != nil {
+				return nil, err
+			}
+		}
+		encryptedPrivkeySlice, err = common.RSAEncryptFromHexPubkey(encryptedPrivkeySlice, pubkeyHex)
+		if err != nil {
+			return nil, err
+		}
+		bs = bytes.NewBufferString(hex.EncodeToString(encryptedPrivkeySlice))
 		if _, err = io.Copy(w1, bs); err != nil {
 			return nil, err
 		}
@@ -86,8 +149,8 @@ func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphr
 		if err != nil {
 			return nil, err
 		}
-		fileStr := string(fileBytes)
-		textBytes, err := hex.DecodeString(fileStr)
+		fileContent := string(fileBytes)
+		textBytes, err := hex.DecodeString(fileContent)
 		if err != nil {
 			return nil, err
 		}
@@ -106,12 +169,27 @@ func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphr
 				return nil, err
 			}
 			dataMap["user"] = string(plainBytes)
-		} else {
-			plainBytes, err := utils.AesGcmDecrypt(hbcPassphrase, encryptedBytes)
-			if err != nil {
-				return nil, err
+		} else if strings.Contains(file.Name, "chaincodes") {
+			if len(hbcPassphrase) > 0 {
+				plainBytes, err := utils.AesGcmDecrypt(hbcPassphrase, encryptedBytes)
+				if err != nil {
+					return nil, err
+				}
+				dataMap["user"] = string(plainBytes)
+			} else {
+
 			}
-			dataMap[file.Name] = string(plainBytes)
+
+		} else {
+			if len(hbcPassphrase) > 0 {
+				plainBytes, err := utils.AesGcmDecrypt(hbcPassphrase, encryptedBytes)
+				if err != nil {
+					return nil, err
+				}
+				dataMap[file.Name] = string(plainBytes)
+			} else {
+				dataMap[file.Name] = string(encryptedBytes)
+			}
 		}
 
 	}

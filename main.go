@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/james-ray/recovery-tool/coincover"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -30,7 +31,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		_, err = coincover.MakeZipFile([]byte(os.Args[3]), hbcPasswdBytes, string(pubkeyBytes), os.Args[6], os.Args[7:], os.Args[2])
+		_, err = coincover.MakeZipFile([]byte(os.Args[3]), hbcPasswdBytes, string(pubkeyBytes), os.Args[6], strings.Split(os.Args[7], "|"), strings.Split(os.Args[8], "|"), strings.Split(os.Args[9], "|"), os.Args[2])
 		if err != nil {
 			panic(err)
 		}
@@ -65,8 +66,8 @@ func main() {
 
 func printUsage() {
 	fmt.Println("USAGE:")
-	fmt.Println("1. recovery-tool makeZipFile [zipFilePath] [userPassphrase] [hbcPassphrase] [pubkeyFilePath] [userMnemonic] [hbcMnemonics...]")
-	fmt.Println("eg: recovery-tool makeZipFile './zipTest.zip' '123123' '456456' './pubkeyFile' 'user word1 word2' 'hbcnode1 word1 word2' 'hbcnode2 word1 word2'")
+	fmt.Println("1. recovery-tool makeZipFile [zipFilePath] [userPassphrase] [hbcPassphrase] [pubkeyFilePath] [userPrivatekeySlice|hbcPrivatekeySlice1|hbcPrivatekeySlice2] [chaincode1|chaincode2|chaincode3] [pubkeySlice1|pubkeySlice2|pubkeySlice3]")
+	fmt.Println("eg: recovery-tool makeZipFile './zipTest.zip' '123123' '456456' './pubkeyFile' '112233|223344|445566' '123123|234234|456456', '123123ab|234234ab|456456ab'")
 	fmt.Println("2. recovery-tool parseZipFile [zipFilePath] [userPassphrase] [hbcPassphrase] [privkeyFilePath]")
 	fmt.Println("eg: recovery-tool parseZipFile './zipTest.zip' '123123' '456456' './privkeyFile'")
 }

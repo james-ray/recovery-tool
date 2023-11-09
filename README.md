@@ -6,7 +6,8 @@ This tool should run in an offline environment
 
 ```
 1、Compile
-GOOS=linux  GOARCH=amd64 CGO_ENABLED=0 go build  -o recovery-tool  main.go
+go mod vendor
+go build  -o recovery-tool  main.go
 
 2、Get user passphrase, hbc passphrase, and the RSA private key from coincover, then run 
 recovery-tool parseZipFile [zipFilePath] [userPassphrase] [hbcPassphrase] [privkeyFilePath]
