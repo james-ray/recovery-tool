@@ -39,6 +39,9 @@ func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userPrivateSli
 	}
 
 	fileName := "chaincodes"
+	if len(hbcPassphrase) == 0 {
+		fileName += "_hbc"
+	}
 	w1, err = zipWriter.Create(fileName)
 	if err != nil {
 		return nil, err
@@ -64,6 +67,9 @@ func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userPrivateSli
 	}
 
 	fileName = "pubkeys"
+	if len(hbcPassphrase) == 0 {
+		fileName += "_hbc"
+	}
 	w1, err = zipWriter.Create(fileName)
 	if err != nil {
 		return nil, err
@@ -89,6 +95,9 @@ func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userPrivateSli
 
 	for i := 0; i < len(hbcPrivateSlices); i++ {
 		fileName = fmt.Sprintf("hbc.encrypted.%d", i)
+		if len(hbcPassphrase) == 0 {
+			fileName += "_hbc"
+		}
 		w1, err = zipWriter.Create(fileName)
 		if err != nil {
 			return nil, err
