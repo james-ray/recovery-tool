@@ -11,7 +11,7 @@ import (
 	"math/big"
 	"sort"
 
-	"sign_center/tss/common"
+	"github.com/james-ray/recovery-tool/tss/common"
 )
 
 type (

@@ -58,7 +58,7 @@ func main() {
 			panic(err)
 		}
 		fmt.Println(d)
-	} else else if os.Args[1] == "deriveChildPrivateKey" {
+	} else if os.Args[1] == "deriveChildPrivateKey" {
 		if len(os.Args) < 7 {
 			printUsage()
 			os.Exit(1)
@@ -80,9 +80,13 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		common.DeriveChildPrivateKey(d, os.Args[6])
 		fmt.Println(d)
-	}else {
+		p, err := common.DeriveChildPrivateKey(d, os.Args[6])
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("priv key is: %x \n", hex.EncodeToString(p))
+	} else {
 		printUsage()
 	}
 	os.Exit(0)
@@ -95,5 +99,5 @@ func printUsage() {
 	fmt.Println("2. recovery-tool parseZipFile [zipFilePath] [userPassphrase] [hbcPassphrase] [privkeyFilePath]")
 	fmt.Println("eg: recovery-tool parseZipFile './zipTest.zip' '123123' '456456' './privkeyFile'")
 	fmt.Println("3. recovery-tool deriveChildPrivateKey [zipFilePath] [userPassphrase] [hbcPassphrase] [privkeyFilePath] [derivePath]")
-	fmt.Println("eg: recovery-tool parseZipFile './zipTest.zip' '123123' '456456' './privkeyFile' `81/0/46/0/0")
+	fmt.Println("eg: recovery-tool deriveChildPrivateKey './zipTest.zip' '123123' '456456' './privkeyFile' '81/0/46/0/0'")
 }

@@ -15,12 +15,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/james-ray/recovery-tool/package/github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec"
 	crypto2 "github.com/james-ray/recovery-tool/tss/crypto"
 	"github.com/james-ray/recovery-tool/tss/crypto/ckd"
+	"github.com/james-ray/recovery-tool/tss/tss"
 	"github.com/james-ray/recovery-tool/utils"
 	"io"
 	"io/ioutil"
+	"math/big"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -506,13 +508,13 @@ func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphr
 }
 
 func derivationChildKey(prByte, pubByte, codeByte []byte, path string) (childPrivKey [32]byte, childPubKey []byte, err error) {
-	pubkey, err := btcec.ParsePubKey(pubByte)
+	pubkey, err := btcec.ParsePubKey(pubByte, btcec.S256())
+	if err != nil {
+		return childPrivKey, nil, fmt.Errorf("derive child pubkey err: %s", err.Error())
+	}
+	ecPoint, err := crypto2.NewECPoint(tss.S256(), pubkey.X, pubkey.Y)
 	if err != nil {
 		return childPrivKey, nil, fmt.Errorf("derive child private err: %s", err.Error())
-	}
-	ecPoint, err := crypto2.NewECPoint(pk.Curve, pubkey)
-	if err != nil {
-		return nil, nil, fmt.Errorf("derive child private err: %s", err.Error())
 	}
 
 	extendedKey := ckd.NewExtendKey(prByte, ecPoint, ecPoint, 0, 0, codeByte)
@@ -542,7 +544,7 @@ func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, err
 		panic("invalid zip file, does not contain chaincodes")
 	}
 	var chainCodes []string
-	err := json.Unmarshal([]byte(chainCodeStr), chainCodes)
+	err := json.Unmarshal([]byte(chainCodeStr), &chainCodes)
 	if err != nil {
 		return nil, err
 	}
@@ -551,7 +553,7 @@ func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, err
 		panic("invalid zip file, does not contain pubkeys")
 	}
 	var pubkeys []string
-	err = json.Unmarshal([]byte(pubkeyStr), pubkeys)
+	err = json.Unmarshal([]byte(pubkeyStr), &pubkeys)
 	if err != nil {
 		return nil, err
 	}
@@ -567,5 +569,50 @@ func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, err
 	if err != nil {
 		return nil, err
 	}
-	childPrivateKeySharederivationChildKey(privateKeyBytes, chainCodeBytes, hdPath)
+	childPrivateKeySlice, _, err := derivationChildKey(privateKeyBytes, deducePubkeyBytes, chainCodeBytes, hdPath)
+	if err != nil {
+		return nil, err
+	}
+
+	privateKey := big.NewInt(0).SetBytes(childPrivateKeySlice[:])
+
+	privateKeyBytes, err = hex.DecodeString(hbcShare0Str)
+	if err != nil {
+		return nil, err
+	}
+	chainCodeBytes, err = hex.DecodeString(chainCodes[1])
+	if err != nil {
+		return nil, err
+	}
+	deducePubkeyBytes, err = hex.DecodeString(pubkeys[1])
+	if err != nil {
+		return nil, err
+	}
+	childPrivateKeySlice, _, err = derivationChildKey(privateKeyBytes, deducePubkeyBytes, chainCodeBytes, hdPath)
+	if err != nil {
+		return nil, err
+	}
+	privateKey.Add(privateKey, big.NewInt(0).SetBytes(childPrivateKeySlice[:]))
+	privateKey.Mod(privateKey, tss.S256().Params().N)
+
+	privateKeyBytes, err = hex.DecodeString(hbcShare1Str)
+	if err != nil {
+		return nil, err
+	}
+	chainCodeBytes, err = hex.DecodeString(chainCodes[2])
+	if err != nil {
+		return nil, err
+	}
+	deducePubkeyBytes, err = hex.DecodeString(pubkeys[2])
+	if err != nil {
+		return nil, err
+	}
+	childPrivateKeySlice, _, err = derivationChildKey(privateKeyBytes, deducePubkeyBytes, chainCodeBytes, hdPath)
+	if err != nil {
+		return nil, err
+	}
+	privateKey.Add(privateKey, big.NewInt(0).SetBytes(childPrivateKeySlice[:]))
+	privateKey.Mod(privateKey, tss.S256().Params().N)
+
+	return privateKey.Bytes(), nil
 }

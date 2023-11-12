@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"sync"
 
-	"sign_center/tss/common"
+	"github.com/james-ray/recovery-tool/tss/common"
 )
 
 type Party interface {
