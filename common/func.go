@@ -7,12 +7,18 @@
 package common
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"crypto/md5"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/james-ray/recovery-tool/package/github.com/btcsuite/btcd/btcec/v2"
+	crypto2 "github.com/james-ray/recovery-tool/tss/crypto"
+	"github.com/james-ray/recovery-tool/tss/crypto/ckd"
+	"github.com/james-ray/recovery-tool/utils"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -326,4 +332,240 @@ func Upload(url string, headers map[string]string, values map[string]io.Reader) 
 		err = fmt.Errorf("bad status: %s", res.Status)
 	}
 	return
+}
+
+func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userPrivateSlice string, hbcPrivateSlices []string, chaincodes []string, ownerPubkeySlices []string, saveFilePath string) (*os.File, error) {
+	archive, err := os.Create(saveFilePath)
+	if err != nil {
+		return nil, err
+	}
+	defer archive.Close()
+	zipWriter := zip.NewWriter(archive)
+	defer zipWriter.Close()
+	w1, err := zipWriter.Create("user_share")
+	if err != nil {
+		return nil, err
+	}
+	encryptedPrivkeySlice, err := utils.AesGcmEncrypt(userPassphrase, []byte(userPrivateSlice))
+	if err != nil {
+		return nil, err
+	}
+	encryptedPrivkeySlice, err = RSAEncryptFromHexPubkey(encryptedPrivkeySlice, pubkeyHex)
+	if err != nil {
+		return nil, err
+	}
+	bs := bytes.NewBufferString(hex.EncodeToString(encryptedPrivkeySlice))
+	if _, err = io.Copy(w1, bs); err != nil {
+		return nil, err
+	}
+
+	fileName := "chaincodes"
+	if len(hbcPassphrase) == 0 {
+		fileName += "_hbc"
+	}
+	w1, err = zipWriter.Create(fileName)
+	if err != nil {
+		return nil, err
+	}
+	chaincodesBytes, err := json.Marshal(chaincodes)
+	if err != nil {
+		return nil, err
+	}
+	if len(hbcPassphrase) > 0 {
+		encryptedPrivkeySlice, err = utils.AesGcmEncrypt(hbcPassphrase, chaincodesBytes)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	encryptedPrivkeySlice, err = RSAEncryptFromHexPubkey(encryptedPrivkeySlice, pubkeyHex)
+	if err != nil {
+		return nil, err
+	}
+	bs = bytes.NewBufferString(hex.EncodeToString(encryptedPrivkeySlice))
+	if _, err = io.Copy(w1, bs); err != nil {
+		return nil, err
+	}
+
+	fileName = "pubkeys"
+	if len(hbcPassphrase) == 0 {
+		fileName += "_hbc"
+	}
+	w1, err = zipWriter.Create(fileName)
+	if err != nil {
+		return nil, err
+	}
+	pubkeysBytes, err := json.Marshal(ownerPubkeySlices)
+	if err != nil {
+		return nil, err
+	}
+	if len(hbcPassphrase) > 0 {
+		encryptedPrivkeySlice, err = utils.AesGcmEncrypt(hbcPassphrase, pubkeysBytes)
+		if err != nil {
+			return nil, err
+		}
+	}
+	encryptedPrivkeySlice, err = RSAEncryptFromHexPubkey(encryptedPrivkeySlice, pubkeyHex)
+	if err != nil {
+		return nil, err
+	}
+	bs = bytes.NewBufferString(hex.EncodeToString(encryptedPrivkeySlice))
+	if _, err = io.Copy(w1, bs); err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < len(hbcPrivateSlices); i++ {
+		fileName = fmt.Sprintf("hbc_share.%d", i)
+		if len(hbcPassphrase) == 0 {
+			fileName += "_hbc"
+		}
+		w1, err = zipWriter.Create(fileName)
+		if err != nil {
+			return nil, err
+		}
+		if len(hbcPassphrase) > 0 {
+			encryptedPrivkeySlice, err = utils.AesGcmEncrypt(hbcPassphrase, []byte(hbcPrivateSlices[i]))
+			if err != nil {
+				return nil, err
+			}
+		}
+		encryptedPrivkeySlice, err = RSAEncryptFromHexPubkey(encryptedPrivkeySlice, pubkeyHex)
+		if err != nil {
+			return nil, err
+		}
+		bs = bytes.NewBufferString(hex.EncodeToString(encryptedPrivkeySlice))
+		if _, err = io.Copy(w1, bs); err != nil {
+			return nil, err
+		}
+	}
+	return archive, nil
+}
+
+func readAll(file *zip.File) ([]byte, error) {
+	fc, err := file.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer fc.Close()
+
+	content, err := ioutil.ReadAll(fc)
+	if err != nil {
+		return nil, err
+	}
+
+	return content, nil
+}
+
+func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphrase []byte) (map[string]string, error) {
+	zf, err := zip.OpenReader(zipFilePath)
+	if err != nil {
+		return nil, err
+	}
+	defer zf.Close()
+
+	dataMap := make(map[string]string)
+	for _, file := range zf.File {
+		fileBytes, err := readAll(file)
+		if err != nil {
+			return nil, err
+		}
+		fileContent := string(fileBytes)
+		textBytes, err := hex.DecodeString(fileContent)
+		if err != nil {
+			return nil, err
+		}
+		if err != nil {
+			return nil, err
+		}
+		//fmt.Printf("=%s\n", file.Name)
+		//fmt.Printf("%x\n\n", fileBytes) // file content
+		encryptedBytes, err := RSADecryptFromHexPrivkey(textBytes, privKeyHex)
+		if err != nil {
+			return nil, err
+		}
+		if file.Name == "user_share" {
+			plainBytes, err := utils.AesGcmDecrypt(userPassphrase, encryptedBytes)
+			if err != nil {
+				return nil, err
+			}
+			dataMap["user_share"] = string(plainBytes)
+		} else {
+			if len(hbcPassphrase) > 0 {
+				plainBytes, err := utils.AesGcmDecrypt(hbcPassphrase, encryptedBytes)
+				if err != nil {
+					return nil, err
+				}
+				dataMap[file.Name] = string(plainBytes)
+			} else {
+				dataMap[file.Name] = string(encryptedBytes)
+			}
+		}
+
+	}
+	return dataMap, nil
+}
+
+func derivationChildKey(prByte, pubByte, codeByte []byte, path string) (childPrivKey [32]byte, childPubKey []byte, err error) {
+	pubkey, err := btcec.ParsePubKey(pubByte)
+	if err != nil {
+		return childPrivKey, nil, fmt.Errorf("derive child private err: %s", err.Error())
+	}
+	ecPoint, err := crypto2.NewECPoint(pk.Curve, pubkey)
+	if err != nil {
+		return nil, nil, fmt.Errorf("derive child private err: %s", err.Error())
+	}
+
+	extendedKey := ckd.NewExtendKey(prByte, ecPoint, ecPoint, 0, 0, codeByte)
+
+	childPrivKey, childPubKey, err = ckd.DerivePrivateKeyForPath(extendedKey, path)
+	if err != nil {
+		return childPrivKey, nil, fmt.Errorf("derive child private err: %s", err.Error())
+	}
+	return childPrivKey, childPubKey, nil
+}
+
+func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, error) {
+	userPrivKeyStr, ok := params["user_share"]
+	if !ok {
+		panic("invalid zip file, does not contain user_share")
+	}
+	hbcShare0Str, ok := params["hbc_share.0"]
+	if !ok {
+		panic("invalid zip file, does not contain user_share")
+	}
+	hbcShare1Str, ok := params["hbc_share.1"]
+	if !ok {
+		panic("invalid zip file, does not contain user_share")
+	}
+	chainCodeStr, ok := params["chaincodes"]
+	if !ok {
+		panic("invalid zip file, does not contain chaincodes")
+	}
+	var chainCodes []string
+	err := json.Unmarshal([]byte(chainCodeStr), chainCodes)
+	if err != nil {
+		return nil, err
+	}
+	pubkeyStr, ok := params["pubkeys"]
+	if !ok {
+		panic("invalid zip file, does not contain pubkeys")
+	}
+	var pubkeys []string
+	err = json.Unmarshal([]byte(pubkeyStr), pubkeys)
+	if err != nil {
+		return nil, err
+	}
+	privateKeyBytes, err := hex.DecodeString(userPrivKeyStr)
+	if err != nil {
+		return nil, err
+	}
+	chainCodeBytes, err := hex.DecodeString(chainCodes[0])
+	if err != nil {
+		return nil, err
+	}
+	deducePubkeyBytes, err := hex.DecodeString(pubkeys[0])
+	if err != nil {
+		return nil, err
+	}
+	childPrivateKeySharederivationChildKey(privateKeyBytes, chainCodeBytes, hdPath)
 }
