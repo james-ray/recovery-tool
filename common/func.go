@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -485,7 +486,7 @@ func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphr
 		if err != nil {
 			return nil, err
 		}
-		if file.Name == "user_share" {
+		if strings.Contains(file.Name, "user_share") {
 			plainBytes, err := utils.AesGcmDecrypt(userPassphrase, encryptedBytes)
 			if err != nil {
 				return nil, err
@@ -497,7 +498,7 @@ func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphr
 				if err != nil {
 					return nil, err
 				}
-				dataMap[file.Name] = string(plainBytes)
+				dataMap[strings.TrimRight(file.Name, "_hbc")] = string(plainBytes)
 			} else {
 				dataMap[file.Name] = string(encryptedBytes)
 			}
