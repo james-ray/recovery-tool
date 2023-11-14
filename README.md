@@ -20,6 +20,7 @@ go build  -o recovery-tool  main.go
   privkeyFilePath: Coincover would give a rsa private key in hex format, copy the whole hex string into a file privkeyFile, save the file.
 
 The command description:
+a. parseZipFile
 recovery-tool parseZipFile [zipFilePath] [userPassphrase] [hbcPassphrase] [privkeyFilePath]
 eg: recovery-tool parseZipFile './zipTest.zip' '123123' '456456' './privkeyFile'
 
@@ -34,6 +35,12 @@ This outputs three arrays:
 hbc.encrypted.0/1 and user are private key slices. 
 pubkeys is an array of the public key slices.
 chaincodes is also an array.
+
+b.deriveChildPrivateKey
+recovery-tool deriveChildPrivateKey [zipFilePath] [userPassphrase] [hbcPassphrase] [privkeyFilePath] [derivePath]
+eg: recovery-tool deriveChildPrivateKey './zipTest.zip' '123123' '456456' './privkeyFile' '81/0/46/0/0'
+
+the derivePath is used for derive the child private key, the path is like '81/0/46/0/0'
 
 I'll update the tool to derive extended private key.
 ```
