@@ -85,7 +85,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("priv key is: %x \n", hex.EncodeToString(p))
+		fmt.Printf("priv key is: %x \n", p)
 	} else {
 		printUsage()
 	}
