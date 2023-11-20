@@ -42,5 +42,5 @@ eg: recovery-tool deriveChildPrivateKey './zipTest.zip' '123123' '456456' './pri
 
 the derivePath is used for derive the child private key, the path is like '81/0/46/0/0'
 
-I'll update the tool to derive extended private key.
+I'll update the tool to support batch derivation and add a recovery UI .
 ```
