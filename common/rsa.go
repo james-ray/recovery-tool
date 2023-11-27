@@ -119,7 +119,11 @@ func parseHexPrivateKey(hexStr string) (*rsa.PrivateKey, error) {
 
 	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		return nil, err
+		priv1, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, err
+		}
+		priv = priv1.(*rsa.PrivateKey)
 	}
 
 	return priv, nil

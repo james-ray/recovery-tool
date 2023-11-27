@@ -491,16 +491,24 @@ func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphr
 			if err != nil {
 				return nil, err
 			}
-			dataMap["user_share"] = string(plainBytes)
+			dataMap["user_share"] = hex.EncodeToString(plainBytes)
 		} else {
 			if len(hbcPassphrase) > 0 {
 				plainBytes, err := utils.AesGcmDecrypt(hbcPassphrase, encryptedBytes)
 				if err != nil {
 					return nil, err
 				}
-				dataMap[strings.TrimRight(file.Name, "_hbc")] = string(plainBytes)
+				if strings.Contains(file.Name, "share") {
+					dataMap[strings.TrimRight(file.Name, "_hbc")] = hex.EncodeToString(plainBytes)
+				} else {
+					dataMap[strings.TrimRight(file.Name, "_hbc")] = string(plainBytes)
+				}
 			} else {
-				dataMap[file.Name] = string(encryptedBytes)
+				if strings.Contains(file.Name, "share") {
+					dataMap[file.Name] = hex.EncodeToString(encryptedBytes)
+				} else {
+					dataMap[file.Name] = string(encryptedBytes)
+				}
 			}
 		}
 
