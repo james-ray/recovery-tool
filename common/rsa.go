@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
-	"fmt"
 	"github.com/pkg/errors"
 )
 
@@ -63,8 +62,8 @@ func RSAVerifySign(data string, pubKey string, signed string) error {
 	return nil
 }
 
-func RSAEncryptFromHexPubkey(data []byte, pubkeyHex string) ([]byte, error) {
-	pub, err := parseHexPublicKey(pubkeyHex)
+func RSAEncryptFromHexPubkey(data []byte, pubkeyStr string) ([]byte, error) {
+	pub, err := parsePublicKey(pubkeyStr)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +74,8 @@ func RSAEncryptFromHexPubkey(data []byte, pubkeyHex string) ([]byte, error) {
 	return encryptedBytes, nil
 }
 
-func RSADecryptFromHexPrivkey(encryptedBytes []byte, privkeyHex string) ([]byte, error) {
-	priv, err := parseHexPrivateKey(privkeyHex)
+func RSADecryptFromHexPrivkey(encryptedBytes []byte, privkeyStr string) ([]byte, error) {
+	priv, err := parsePrivateKey(privkeyStr)
 	if err != nil {
 		return nil, err
 	}
@@ -87,13 +86,13 @@ func RSADecryptFromHexPrivkey(encryptedBytes []byte, privkeyHex string) ([]byte,
 	return plainBytes, nil
 }
 
-func parseHexPublicKey(hexStr string) (*rsa.PublicKey, error) {
-	pemData, err := hexToDER(hexStr)
+func parsePublicKey(pemData string) (*rsa.PublicKey, error) {
+	/*pemData, err := hexToDER(hexStr)
 	if err != nil {
 		fmt.Println("Failed to convert hex to PEM:", err)
 		return nil, err
-	}
-	p, _ := pem.Decode(pemData)
+	}*/
+	p, _ := pem.Decode([]byte(pemData))
 	// The key is expected to be in ASN.1 DER format.
 	pub, err := x509.ParsePKIXPublicKey(p.Bytes)
 	if err != nil {
@@ -103,16 +102,16 @@ func parseHexPublicKey(hexStr string) (*rsa.PublicKey, error) {
 	return rsaPub, nil
 }
 
-func parseHexPrivateKey(hexStr string) (*rsa.PrivateKey, error) {
+func parsePrivateKey(pemData string) (*rsa.PrivateKey, error) {
 	// Convert the hex private key to PEM format
-	pemData, err := hexToDER(hexStr)
+	/*pemData, err := hexToDER(hexStr)
 	if err != nil {
 		fmt.Println("Failed to convert hex to PEM:", err)
 		return nil, err
-	}
+	}*/
 	//fmt.Printf("priv der: %s", string(pemData))
 	// The key is expected to be in ASN.1 DER format.
-	block, _ := pem.Decode(pemData)
+	block, _ := pem.Decode([]byte(pemData))
 	if block == nil {
 		return nil, errors.New("Failed to parse PEM block containing the key")
 	}

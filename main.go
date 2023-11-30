@@ -4,6 +4,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/james-ray/recovery-tool/common"
+	"github.com/james-ray/recovery-tool/tss/crypto"
+	"github.com/james-ray/recovery-tool/tss/tss"
+	"math/big"
 	"os"
 	"strings"
 )
@@ -85,7 +88,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("priv key is: %x \n", p)
+		pubECPoint := crypto.ScalarBaseMult(tss.S256(), big.NewInt(0).SetBytes(p))
+		fmt.Printf("priv key is: %x  pubkey x: %x y: %x \n", p, pubECPoint.X().Bytes(), pubECPoint.Y().Bytes())
 	} else {
 		printUsage()
 	}
