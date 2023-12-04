@@ -148,10 +148,15 @@ func GenerateRSAKeyPair() error {
 		return err
 	}
 
+	privBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	if err != nil {
+		fmt.Println("Error MarshalPKCS8PrivateKey:", err)
+		return err
+	}
 	// Encode the private key to the PEM format
 	privateKeyPEM := &pem.Block{
 		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+		Bytes: privBytes,
 	}
 	privateKeyFile, err := os.Create("./private_key.pem") //"./private_key.pem"
 	if err != nil {
@@ -161,21 +166,29 @@ func GenerateRSAKeyPair() error {
 	pem.Encode(privateKeyFile, privateKeyPEM)
 	privateKeyFile.Close()
 
-	// Extract the public key from the private key
-	publicKey := &privateKey.PublicKey
-
-	// Encode the public key to the PEM format
-	publicKeyPEM := &pem.Block{
-		Type:  "RSA PUBLIC KEY",
-		Bytes: x509.MarshalPKCS1PublicKey(publicKey),
+	pubASN1, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		fmt.Println("Error MarshalPKIXPublicKey:", err)
+		return err
 	}
-	publicKeyFile, err := os.Create("./public_key.pem") //"./public_key.pem"
+
+	pubBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: pubASN1,
+	})
+
+	publicKeyFile, err := os.Create("./public_key.pem")
 	if err != nil {
 		fmt.Println("Error creating public key file:", err)
 		return err
 	}
-	pem.Encode(publicKeyFile, publicKeyPEM)
-	publicKeyFile.Close()
+	defer publicKeyFile.Close()
+
+	_, err = publicKeyFile.Write(pubBytes)
+	if err != nil {
+		fmt.Println("Error writing public key file:", err)
+		return err
+	}
 
 	fmt.Println("RSA key pair generated successfully!")
 	return nil
