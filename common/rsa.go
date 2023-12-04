@@ -9,7 +9,9 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
+	"fmt"
 	"github.com/pkg/errors"
+	"os"
 )
 
 func RSASign(data string, priKey string) (string, error) {
@@ -62,7 +64,7 @@ func RSAVerifySign(data string, pubKey string, signed string) error {
 	return nil
 }
 
-func RSAEncryptFromHexPubkey(data []byte, pubkeyStr string) ([]byte, error) {
+func RSAEncryptFromPubkey(data []byte, pubkeyStr string) ([]byte, error) {
 	pub, err := parsePublicKey(pubkeyStr)
 	if err != nil {
 		return nil, err
@@ -74,7 +76,7 @@ func RSAEncryptFromHexPubkey(data []byte, pubkeyStr string) ([]byte, error) {
 	return encryptedBytes, nil
 }
 
-func RSADecryptFromHexPrivkey(encryptedBytes []byte, privkeyStr string) ([]byte, error) {
+func RSADecryptFromPrivkey(encryptedBytes []byte, privkeyStr string) ([]byte, error) {
 	priv, err := parsePrivateKey(privkeyStr)
 	if err != nil {
 		return nil, err
@@ -136,4 +138,45 @@ func hexToDER(hexData string) ([]byte, error) {
 		return nil, err
 	}
 	return decoded, nil
+}
+
+func GenerateRSAKeyPair() error {
+	// Generate a new RSA private key with 2048 bits
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		fmt.Println("Error generating RSA private key:", err)
+		return err
+	}
+
+	// Encode the private key to the PEM format
+	privateKeyPEM := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	}
+	privateKeyFile, err := os.Create("./private_key.pem") //"./private_key.pem"
+	if err != nil {
+		fmt.Println("Error creating private key file:", err)
+		return err
+	}
+	pem.Encode(privateKeyFile, privateKeyPEM)
+	privateKeyFile.Close()
+
+	// Extract the public key from the private key
+	publicKey := &privateKey.PublicKey
+
+	// Encode the public key to the PEM format
+	publicKeyPEM := &pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: x509.MarshalPKCS1PublicKey(publicKey),
+	}
+	publicKeyFile, err := os.Create("./public_key.pem") //"./public_key.pem"
+	if err != nil {
+		fmt.Println("Error creating public key file:", err)
+		return err
+	}
+	pem.Encode(publicKeyFile, publicKeyPEM)
+	publicKeyFile.Close()
+
+	fmt.Println("RSA key pair generated successfully!")
+	return nil
 }

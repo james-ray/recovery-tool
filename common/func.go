@@ -353,7 +353,7 @@ func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userPrivateSli
 	if err != nil {
 		return nil, err
 	}
-	encryptedPrivkeySlice, err = RSAEncryptFromHexPubkey(encryptedPrivkeySlice, pubkeyHex)
+	encryptedPrivkeySlice, err = RSAEncryptFromPubkey(encryptedPrivkeySlice, pubkeyHex)
 	if err != nil {
 		return nil, err
 	}
@@ -381,7 +381,7 @@ func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userPrivateSli
 		}
 	}
 
-	encryptedPrivkeySlice, err = RSAEncryptFromHexPubkey(encryptedPrivkeySlice, pubkeyHex)
+	encryptedPrivkeySlice, err = RSAEncryptFromPubkey(encryptedPrivkeySlice, pubkeyHex)
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +408,7 @@ func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userPrivateSli
 			return nil, err
 		}
 	}
-	encryptedPrivkeySlice, err = RSAEncryptFromHexPubkey(encryptedPrivkeySlice, pubkeyHex)
+	encryptedPrivkeySlice, err = RSAEncryptFromPubkey(encryptedPrivkeySlice, pubkeyHex)
 	if err != nil {
 		return nil, err
 	}
@@ -432,7 +432,7 @@ func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyHex, userPrivateSli
 				return nil, err
 			}
 		}
-		encryptedPrivkeySlice, err = RSAEncryptFromHexPubkey(encryptedPrivkeySlice, pubkeyHex)
+		encryptedPrivkeySlice, err = RSAEncryptFromPubkey(encryptedPrivkeySlice, pubkeyHex)
 		if err != nil {
 			return nil, err
 		}
@@ -482,7 +482,7 @@ func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphr
 		}
 		//fmt.Printf("=%s\n", file.Name)
 		//fmt.Printf("%x\n\n", fileBytes) // file content
-		encryptedBytes, err := RSADecryptFromHexPrivkey(textBytes, privKeyHex)
+		encryptedBytes, err := RSADecryptFromPrivkey(textBytes, privKeyHex)
 		if err != nil {
 			return nil, err
 		}
