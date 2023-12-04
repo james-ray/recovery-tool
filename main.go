@@ -110,5 +110,5 @@ func printUsage() {
 	fmt.Println("3. recovery-tool deriveChildPrivateKey [zipFilePath] [userPassphrase] [hbcPassphrase] [privkeyFilePath] [derivePath]")
 	fmt.Println("eg: recovery-tool deriveChildPrivateKey './zipTest.zip' '123123' '456456' './private_key.pem' '81/0/46/0/0'")
 	fmt.Println("4. recovery-tool generateKeyPair")
-	fmt.Println("eg: recovery-tool deriveChildPrivateKey './zipTest.zip' '123123' '456456' './private_key.pem' '81/0/46/0/0'")
+	fmt.Println("description: will generate two files: ./private_key.pem and ./public_key.pem")
 }
