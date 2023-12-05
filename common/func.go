@@ -683,7 +683,10 @@ func ParseCsv(filePath string) ([]map[string]string, error) {
 	}
 
 	var data []map[string]string
-	for _, row := range records {
+	for i, row := range records {
+		if i == 0 {
+			continue //ignore the first row, it is the field header
+		}
 		record := map[string]string{
 			"Chain":   row[0],
 			"Address": row[1],
