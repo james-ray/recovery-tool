@@ -4,9 +4,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/james-ray/recovery-tool/common"
-	"github.com/james-ray/recovery-tool/tss/crypto"
-	"github.com/james-ray/recovery-tool/tss/tss"
-	"math/big"
 	"os"
 	"strings"
 )
@@ -62,38 +59,41 @@ func main() {
 		}
 		fmt.Println(d)
 	} else if os.Args[1] == "deriveChildPrivateKey" {
-		if len(os.Args) < 7 {
+		if len(os.Args) < 5 {
 			printUsage()
 			os.Exit(1)
 		}
-		privkeyBytes, err := os.ReadFile(os.Args[5])
+		metadataMap, err := common.ReadMetadataFile(os.Args[2])
 		if err != nil {
 			panic(err)
 		}
-		privkeyBytes = privkeyBytes[:len(privkeyBytes)-1]
-		/*fmt.Println(string(privkeyBytes))
-		fmt.Println(len(string(privkeyBytes)))
-		fmt.Println(len(privkeyBytes))
-		fmt.Printf("%x \n", privkeyBytes)*/
-		hbcPasswdBytes, err := hex.DecodeString(os.Args[4])
+		_, err = common.DeriveChildPrivateKey(metadataMap, os.Args[3], os.Args[4])
 		if err != nil {
 			panic(err)
 		}
-		d, err := common.ParseFile(os.Args[2], string(privkeyBytes), []byte(os.Args[3]), hbcPasswdBytes)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(d)
-		p, err := common.DeriveChildPrivateKey(d, os.Args[6])
-		if err != nil {
-			panic(err)
-		}
-		pubECPoint := crypto.ScalarBaseMult(tss.S256(), big.NewInt(0).SetBytes(p))
-		fmt.Printf("priv key is: %x  pubkey x: %x y: %x \n", p, pubECPoint.X().Bytes(), pubECPoint.Y().Bytes())
 	} else if os.Args[1] == "generateKeyPair" {
 		err := common.GenerateRSAKeyPair()
 		if err != nil {
 			panic(err)
+		}
+	} else if os.Args[1] == "deriveCsvFile" {
+		if len(os.Args) < 4 {
+			printUsage()
+			os.Exit(1)
+		}
+		records, err := common.ParseCsv(os.Args[3])
+		if err != nil {
+			panic(err)
+		}
+		metadataMap, err := common.ReadMetadataFile(os.Args[2])
+		if err != nil {
+			panic(err)
+		}
+		for _, r := range records {
+			_, err := common.DeriveChildPrivateKey(metadataMap, r["Path"], r["Chain"])
+			if err != nil {
+				panic(err)
+			}
 		}
 	} else {
 		printUsage()
@@ -103,12 +103,14 @@ func main() {
 
 func printUsage() {
 	fmt.Println("USAGE:")
-	fmt.Println("1. recovery-tool makeZipFile [zipFilePath] [userPassphrase] [hbcPassphrase] [pubkeyFilePath] [userPrivatekeySlice] [hbcPrivatekeySlice1|hbcPrivatekeySlice2] [chaincode1|chaincode2|chaincode3] [pubkeySlice1|pubkeySlice2|pubkeySlice3]")
-	fmt.Println("eg: recovery-tool makeZipFile './zipTest.zip' '123123' '456456' './pubkeyFile' '5ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442c9' '7ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442c9|8ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442c9' '4ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442c9|4ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442ca|4ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442cb' '033669d206967b384d588b366b6400733987befc6604fec764f9fc2d42a3bf7a86|021b491468a9c042e6d4e994c3979df14454cd99e4fc207161a929e719f644540b|02f75cebd23a9ac7e1364d0462be378f09aaf26474eb46cc43bdef5de2817932e5'")
-	fmt.Println("2. recovery-tool parseZipFile [zipFilePath] [userPassphrase] [hbcPassphrase] [privkeyFilePath]")
-	fmt.Println("eg: recovery-tool parseZipFile './zipTest.zip' '123123' '456456' './private_key.pem'")
-	fmt.Println("3. recovery-tool deriveChildPrivateKey [zipFilePath] [userPassphrase] [hbcPassphrase] [privkeyFilePath] [derivePath]")
-	fmt.Println("eg: recovery-tool deriveChildPrivateKey './zipTest.zip' '123123' '456456' './private_key.pem' '81/0/46/0/0'")
-	fmt.Println("4. recovery-tool generateKeyPair")
+	fmt.Println("1. recovery-tool generateKeyPair")
 	fmt.Println("description: will generate two files: ./private_key.pem and ./public_key.pem")
+	fmt.Println("2. recovery-tool makeZipFile [zipFilePath] [userPassphrase] [hbcPassphrase] [pubkeyFilePath] [userPrivatekeySlice] [hbcPrivatekeySlice1|hbcPrivatekeySlice2] [chaincode1|chaincode2|chaincode3] [pubkeySlice1|pubkeySlice2|pubkeySlice3]")
+	fmt.Println("eg: recovery-tool makeZipFile './zipTest.zip' '123123' '456456' './pubkeyFile' '5ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442c9' '7ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442c9|8ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442c9' '4ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442c9|4ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442ca|4ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442cb' '033669d206967b384d588b366b6400733987befc6604fec764f9fc2d42a3bf7a86|021b491468a9c042e6d4e994c3979df14454cd99e4fc207161a929e719f644540b|02f75cebd23a9ac7e1364d0462be378f09aaf26474eb46cc43bdef5de2817932e5'")
+	fmt.Println("3. recovery-tool parseZipFile [zipFilePath] [userPassphrase] [hbcPassphrase] [privkeyFilePath]")
+	fmt.Println("eg: recovery-tool parseZipFile './zipTest.zip' '123123' '456456' './private_key.pem'")
+	fmt.Println("4. recovery-tool deriveChildPrivateKey [metadataFilePath] [derivePath] [chain]")
+	fmt.Println("eg: recovery-tool deriveChildPrivateKey './metadata.json' '81/0/46/0/0' 'trx'")
+	fmt.Println("4. recovery-tool deriveCsvFile [metadataFilePath] [csvFilePath]")
+	fmt.Println("eg: recovery-tool deriveCsvFile './metadata.json' './walletPaths.csv'")
 }

@@ -10,13 +10,14 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"crypto/ecdsa"
 	"crypto/md5"
 	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/btcsuite/btcd/btcec"
-	crypto2 "github.com/james-ray/recovery-tool/tss/crypto"
+	"github.com/james-ray/recovery-tool/tss/crypto"
 	"github.com/james-ray/recovery-tool/tss/crypto/ckd"
 	"github.com/james-ray/recovery-tool/tss/tss"
 	"github.com/james-ray/recovery-tool/utils"
@@ -511,8 +512,22 @@ func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphr
 				}
 			}
 		}
-
 	}
+	file, err := os.Create("./metadata.json")
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return nil, err
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	err = encoder.Encode(dataMap)
+	if err != nil {
+		fmt.Println("Error encoding JSON:", err)
+		return nil, err
+	}
+
+	fmt.Println("metadata.json created successfully")
 	return dataMap, nil
 }
 
@@ -521,7 +536,7 @@ func derivationChildKey(prByte, pubByte, codeByte []byte, path string) (childPri
 	if err != nil {
 		return childPrivKey, nil, fmt.Errorf("derive child pubkey err: %s", err.Error())
 	}
-	ecPoint, err := crypto2.NewECPoint(tss.S256(), pubkey.X, pubkey.Y)
+	ecPoint, err := crypto.NewECPoint(tss.S256(), pubkey.X, pubkey.Y)
 	if err != nil {
 		return childPrivKey, nil, fmt.Errorf("derive child private err: %s", err.Error())
 	}
@@ -535,7 +550,26 @@ func derivationChildKey(prByte, pubByte, codeByte []byte, path string) (childPri
 	return childPrivKey, childPubKey, nil
 }
 
-func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, error) {
+func ReadMetadataFile(metadataFilePath string) (map[string]string, error) {
+	file, err := os.Open(metadataFilePath)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return nil, err
+	}
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	var params map[string]string
+	err = decoder.Decode(&params)
+	if err != nil {
+		fmt.Println("Error decoding JSON:", err)
+		return nil, err
+	}
+	fmt.Println("metadata:", params)
+	return params, nil
+}
+
+func DeriveChildPrivateKey(params map[string]string, hdPath string, chain string) ([]byte, error) { //TODO: derive address according to the chain type
 	userPrivKeyStr, ok := params["user_share"]
 	if !ok {
 		panic("invalid zip file, does not contain user_share")
@@ -622,6 +656,12 @@ func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, err
 	}
 	privateKey.Add(privateKey, big.NewInt(0).SetBytes(childPrivateKeySlice[:]))
 	privateKey.Mod(privateKey, tss.S256().Params().N)
-
+	pubECPoint := crypto.ScalarBaseMult(tss.S256(), big.NewInt(0).SetBytes(privateKey.Bytes()))
+	publicKey := &ecdsa.PublicKey{X: big.NewInt(0).SetBytes(pubECPoint.X().Bytes()), Y: big.NewInt(0).SetBytes(pubECPoint.Y().Bytes()), Curve: tss.S256()}
+	addr, err := switchChainAddress(publicKey, chain)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("priv key is: %x  pubkey x: %x y: %x addr: %s \n", privateKey.Bytes(), pubECPoint.X().Bytes(), pubECPoint.Y().Bytes(), addr)
 	return privateKey.Bytes(), nil
 }
