@@ -339,7 +339,7 @@ func Upload(url string, headers map[string]string, values map[string]io.Reader) 
 	return
 }
 
-func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyPem, userPrivateSlice string, hbcPrivateSlices []string, chaincodes []string, ownerPubkeySlices []string, saveFilePath string) (*os.File, error) {
+func MakeZipFile(userPassphrase, hbcPassphrase []byte, pubkeyPem []byte, userPrivateSlice string, hbcPrivateSlices []string, chaincodes []string, ownerPubkeySlices []string, saveFilePath string) (*os.File, error) {
 	archive, err := os.Create(saveFilePath)
 	if err != nil {
 		return nil, err
@@ -461,7 +461,7 @@ func readAll(file *zip.File) ([]byte, error) {
 	return content, nil
 }
 
-func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphrase []byte) (map[string]string, error) {
+func ParseFile(zipFilePath string, privkeyPem []byte, userPassphrase, hbcPassphrase []byte) (map[string]string, error) {
 	zf, err := zip.OpenReader(zipFilePath)
 	if err != nil {
 		return nil, err
@@ -484,7 +484,7 @@ func ParseFile(zipFilePath string, privKeyHex string, userPassphrase, hbcPassphr
 		}
 		//fmt.Printf("=%s\n", file.Name)
 		//fmt.Printf("%x\n\n", fileBytes) // file content
-		encryptedBytes, err := RSADecryptFromPrivkey(textBytes, privKeyHex)
+		encryptedBytes, err := RSADecryptFromPrivkey(textBytes, privkeyPem)
 		if err != nil {
 			return nil, err
 		}

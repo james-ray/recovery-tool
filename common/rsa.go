@@ -65,37 +65,37 @@ func RSAVerifySign(data string, pubKey string, signed string) error {
 	return nil
 }
 
-func RSAEncryptFromPubkey(data []byte, pubkeyStr string) ([]byte, error) {
-	pub, err := parsePublicKey(pubkeyStr)
+func RSAEncryptFromPubkey(data []byte, pubkeyBytes []byte) ([]byte, error) {
+	pub, err := parsePublicKey(pubkeyBytes)
 	if err != nil {
 		return nil, err
 	}
-	encryptedBytes, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, pub, data, nil)
+	encryptedBytes, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, pub, data, []byte("HBC_MPC"))
 	if err != nil {
 		return nil, err
 	}
 	return encryptedBytes, nil
 }
 
-func RSADecryptFromPrivkey(encryptedBytes []byte, privkeyStr string) ([]byte, error) {
-	priv, err := parsePrivateKey(privkeyStr)
+func RSADecryptFromPrivkey(encryptedBytes []byte, privkeyBytes []byte) ([]byte, error) {
+	priv, err := parsePrivateKey(privkeyBytes)
 	if err != nil {
 		return nil, err
 	}
-	plainBytes, err := rsa.DecryptPKCS1v15(nil, priv, encryptedBytes)
+	plainBytes, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, priv, encryptedBytes, []byte("HBC_MPC"))
 	if err != nil {
 		return nil, err
 	}
 	return plainBytes, nil
 }
 
-func parsePublicKey(pemData string) (*rsa.PublicKey, error) {
+func parsePublicKey(pemData []byte) (*rsa.PublicKey, error) {
 	/*pemData, err := hexToDER(hexStr)
 	if err != nil {
 		fmt.Println("Failed to convert hex to PEM:", err)
 		return nil, err
 	}*/
-	p, _ := pem.Decode([]byte(pemData))
+	p, _ := pem.Decode(pemData)
 	// The key is expected to be in ASN.1 DER format.
 	pub, err := x509.ParsePKIXPublicKey(p.Bytes)
 	if err != nil {
@@ -105,7 +105,7 @@ func parsePublicKey(pemData string) (*rsa.PublicKey, error) {
 	return rsaPub, nil
 }
 
-func parsePrivateKey(pemData string) (*rsa.PrivateKey, error) {
+func parsePrivateKey(pemData []byte) (*rsa.PrivateKey, error) {
 	// Convert the hex private key to PEM format
 	/*pemData, err := hexToDER(hexStr)
 	if err != nil {
@@ -114,7 +114,7 @@ func parsePrivateKey(pemData string) (*rsa.PrivateKey, error) {
 	}*/
 	//fmt.Printf("priv der: %s", string(pemData))
 	// The key is expected to be in ASN.1 DER format.
-	block, _ := pem.Decode([]byte(pemData))
+	block, _ := pem.Decode(pemData)
 	if block == nil {
 		return nil, errors.New("Failed to parse PEM block containing the key")
 	}
@@ -142,8 +142,8 @@ func hexToDER(hexData string) ([]byte, error) {
 }
 
 func GenerateRSAKeyPair() error {
-	// Generate a new RSA private key with 2048 bits
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	// Generate a new RSA private key with 4096 bits
+	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		fmt.Println("Error generating RSA private key:", err)
 		return err

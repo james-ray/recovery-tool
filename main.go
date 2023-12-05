@@ -31,7 +31,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		pubkeyBytes = pubkeyBytes[:len(pubkeyBytes)-1]
+		//pubkeyBytes = pubkeyBytes[:len(pubkeyBytes)-1]
 		/*fmt.Println(string(pubkeyBytes))
 		fmt.Println(len(string(pubkeyBytes)))
 		fmt.Println(len(pubkeyBytes))
@@ -40,10 +40,11 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		_, err = common.MakeZipFile([]byte(os.Args[3]), hbcPasswdBytes, string(pubkeyBytes), os.Args[6], strings.Split(os.Args[7], "|"), strings.Split(os.Args[8], "|"), strings.Split(os.Args[9], "|"), os.Args[2])
+		_, err = common.MakeZipFile([]byte(os.Args[3]), hbcPasswdBytes, pubkeyBytes, os.Args[6], strings.Split(os.Args[7], "|"), strings.Split(os.Args[8], "|"), strings.Split(os.Args[9], "|"), os.Args[2])
 		if err != nil {
 			panic(err)
 		}
+		fmt.Println("the zip file is successfully created")
 	} else if os.Args[1] == "parseZipFile" {
 		if len(os.Args) < 6 {
 			printUsage()
@@ -53,7 +54,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		privkeyBytes = privkeyBytes[:len(privkeyBytes)-1]
+		//privkeyBytes = privkeyBytes[:len(privkeyBytes)-1]
 		/*fmt.Println(string(privkeyBytes))
 		fmt.Println(len(string(privkeyBytes)))
 		fmt.Println(len(privkeyBytes))
@@ -62,7 +63,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		d, err := common.ParseFile(os.Args[2], string(privkeyBytes), []byte(os.Args[3]), hbcPasswdBytes)
+		d, err := common.ParseFile(os.Args[2], privkeyBytes, []byte(os.Args[3]), hbcPasswdBytes)
 		if err != nil {
 			panic(err)
 		}
