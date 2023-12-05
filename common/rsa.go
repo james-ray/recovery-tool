@@ -99,7 +99,10 @@ func parsePublicKey(pemData []byte) (*rsa.PublicKey, error) {
 	// The key is expected to be in ASN.1 DER format.
 	pub, err := x509.ParsePKIXPublicKey(p.Bytes)
 	if err != nil {
-		return nil, err
+		pub, err = x509.ParsePKCS1PublicKey(p.Bytes)
+		if err != nil {
+			return nil, err
+		}
 	}
 	rsaPub := pub.(*rsa.PublicKey)
 	return rsaPub, nil
@@ -149,7 +152,7 @@ func GenerateRSAKeyPair() error {
 		return err
 	}
 
-	privBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	privBytes := x509.MarshalPKCS1PrivateKey(privateKey)
 	if err != nil {
 		fmt.Println("Error MarshalPKCS8PrivateKey:", err)
 		return err
@@ -167,7 +170,7 @@ func GenerateRSAKeyPair() error {
 	pem.Encode(privateKeyFile, privateKeyPEM)
 	privateKeyFile.Close()
 
-	pubASN1, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	pubASN1 := x509.MarshalPKCS1PublicKey(&privateKey.PublicKey)
 	if err != nil {
 		fmt.Println("Error MarshalPKIXPublicKey:", err)
 		return err
