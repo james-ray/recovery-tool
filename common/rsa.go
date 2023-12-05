@@ -7,7 +7,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
-	"encoding/csv"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
@@ -199,36 +198,4 @@ type Record struct {
 	Chain   string
 	Path    string
 	Address string
-}
-
-func ParseCsv(filePath string) ([]map[string]string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return nil, err
-	}
-	defer file.Close()
-
-	reader := csv.NewReader(file)
-	records, err := reader.ReadAll()
-	if err != nil {
-		fmt.Println("Error reading CSV:", err)
-		return nil, err
-	}
-
-	var data []map[string]string
-	for _, row := range records {
-		record := map[string]string{
-			"Chain":   row[0],
-			"Path":    row[1],
-			"Address": row[2],
-		}
-		data = append(data, record)
-	}
-
-	for _, record := range data {
-		fmt.Printf("Chain: %s, Path: %s, Address: %s\n", record["Chain"], record["Path"], record["Address"])
-	}
-
-	return data, nil
 }
