@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
@@ -69,7 +70,7 @@ func RSAEncryptFromPubkey(data []byte, pubkeyStr string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	encryptedBytes, err := rsa.EncryptPKCS1v15(rand.Reader, pub, data)
+	encryptedBytes, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, pub, data, nil)
 	if err != nil {
 		return nil, err
 	}
