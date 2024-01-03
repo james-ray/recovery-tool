@@ -29,10 +29,49 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/shopspring/decimal"
+)
+
+// mnemonic language
+const (
+	English            = "english"
+	ChineseSimplified  = "chinese_simplified"
+	ChineseTraditional = "chinese_traditional"
+	Korean             = "korean"
+)
+
+// zero is deafult of uint32
+const (
+	Zero      uint32 = 0
+	ZeroQuote uint32 = 0x80000000
+	BTCToken  uint32 = 0x10000000
+	ETHToken  uint32 = 0x20000000
+)
+
+// wallet type from bip44
+const (
+	// https://github.com/satoshilabs/slips/blob/master/slip-0044.md#registered-coin-types
+	BTC       = ZeroQuote + 0
+	LTC       = ZeroQuote + 2
+	DOGE      = ZeroQuote + 3
+	DASH      = ZeroQuote + 5
+	Optimism  = ZeroQuote + 10
+	ETH       = ZeroQuote + 60
+	BCH       = ZeroQuote + 145
+	TRX       = ZeroQuote + 195
+	BSV       = ZeroQuote + 236
+	Fantom    = ZeroQuote + 250
+	ZKSYNC    = ZeroQuote + 324
+	POLYGON   = ZeroQuote + 966
+	ARBITRUM  = ZeroQuote + 42161
+	OKChain   = ZeroQuote + 996
+	BSC       = ZeroQuote + 714
+	HECO      = ZeroQuote + 553
+	Avalanche = ZeroQuote + 43114
 )
 
 // 全局 transport
@@ -570,7 +609,7 @@ func ReadMetadataFile(metadataFilePath string) (map[string]string, error) {
 	return params, nil
 }
 
-func DeriveChildPrivateKey(params map[string]string, hdPath string, chain string) ([]byte, error) { //TODO: derive address according to the chain type
+func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, error) { //TODO: derive address according to the chain type
 	userPrivKeyStr, ok := params["user_share"]
 	if !ok {
 		panic("invalid zip file, does not contain user_share")
@@ -659,6 +698,37 @@ func DeriveChildPrivateKey(params map[string]string, hdPath string, chain string
 	privateKey.Mod(privateKey, tss.S256().Params().N)
 	pubECPoint := crypto.ScalarBaseMult(tss.S256(), big.NewInt(0).SetBytes(privateKey.Bytes()))
 	publicKey := &ecdsa.PublicKey{X: big.NewInt(0).SetBytes(pubECPoint.X().Bytes()), Y: big.NewInt(0).SetBytes(pubECPoint.Y().Bytes()), Curve: tss.S256()}
+
+	eles := strings.Split("/", hdPath)
+	chainIntStr := eles[2]
+	chainInt, err := strconv.Atoi(chainIntStr)
+	if err != nil {
+		return nil, err
+	}
+	chainUint32 := uint32(chainInt)
+	var chain string
+	switch chainUint32 {
+	case BTC:
+		chain = "btc"
+	case ETH:
+		chain = "eth"
+	case LTC:
+		chain = "ltc"
+	case DOGE:
+		chain = "doge"
+	case DASH:
+		chain = "dash"
+	case BCH:
+		chain = "bch"
+	case TRX:
+		chain = "trx"
+		/*	case HECO:
+				chain = "eth"
+			case BSC:
+				chain = "eth"*/
+	default:
+		panic("invalid chain type")
+	}
 	addr, err := switchChainAddress(publicKey, chain)
 	if err != nil {
 		return nil, err

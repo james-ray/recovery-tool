@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebAssembly Hello World</title>
+</head>
+<script src="wasm_exec.js"></script>
+<script>
+
+    var base64String = "AAAAAAAAA";
+
+    async function runWasm() {
+        try {
+            const vaultIndex = document.getElementById("vaultIndex").value;
+            const chainInt = document.getElementById("chain").value;
+            const subIndex = document.getElementById("subIndex").value;
+
+            const wasmBinary = Uint8Array.from(atob(base64String), c => c.charCodeAt(0));
+            console.log('vaultIndex:', vaultIndex);
+            console.log('chainInt:', chainInt);
+            console.log('subIndex:', subIndex);
+
+            const go = new Go();
+            const { instance } = await WebAssembly.instantiate(wasmBinary, go.importObject);
+            //go.run(instance);
+            const output1 = instance.exports.hello();
+            console.log('output1:', output1);
+            const output = instance.exports.generateChildExtendedPrivateKey("./metadata.json",  0, vaultIndex, chainInt, subIndex);
+            document.getElementById("output").innerText = "Child Extended Private Key: " + output;
+        } catch (error) {
+            console.error('An error occurred:', error);
+            // Handle the error, e.g., display an error message to the user
+        }
+    }
+</script>
+<body>
+<label for="vaultIndex">Vault Index:</label>
+<input type="text" id="vaultIndex"><br>
+
+<label for="chain">Chain:</label>
+<input type="text" id="chain"><br>
+
+<label for="subIndex">Sub Index:</label>
+<input type="text" id="subIndex"><br>
+
+<button onclick="runWasm()">Generate Child Extended Private Key</button>
+<br>
+
+<div id="output"></div>
+</body>
+</html>
