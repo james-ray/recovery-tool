@@ -702,7 +702,7 @@ func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, err
 	pubECPoint := crypto.ScalarBaseMult(btcec.S256(), big.NewInt(0).SetBytes(privateKey.Bytes()))
 	publicKey := &ecdsa.PublicKey{X: big.NewInt(0).SetBytes(pubECPoint.X().Bytes()), Y: big.NewInt(0).SetBytes(pubECPoint.Y().Bytes()), Curve: btcec.S256()}
 
-	eles := strings.Split("/", hdPath)
+	eles := strings.Split("\\/", hdPath)
 	chainIntStr := eles[2]
 	chainInt, err := strconv.Atoi(chainIntStr)
 	if err != nil {
