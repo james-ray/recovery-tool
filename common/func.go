@@ -20,7 +20,6 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/james-ray/recovery-tool/tss/crypto"
 	"github.com/james-ray/recovery-tool/tss/crypto/ckd"
-	"github.com/james-ray/recovery-tool/tss/tss"
 	"github.com/james-ray/recovery-tool/utils"
 	"io"
 	"io/ioutil"
@@ -576,7 +575,7 @@ func derivationChildKey(prByte, pubByte, codeByte []byte, path string) (childPri
 	if err != nil {
 		return childPrivKey, nil, fmt.Errorf("derive child pubkey err: %s", err.Error())
 	}
-	ecPoint, err := crypto.NewECPoint(tss.S256(), pubkey.X, pubkey.Y)
+	ecPoint, err := crypto.NewECPoint(btcec.S256(), pubkey.X, pubkey.Y)
 	if err != nil {
 		return childPrivKey, nil, fmt.Errorf("derive child private err: %s", err.Error())
 	}
@@ -607,6 +606,10 @@ func ReadMetadataFile(metadataFilePath string) (map[string]string, error) {
 	}
 	fmt.Println("metadata:", params)
 	return params, nil
+}
+
+func TestDeriveChildPrivateKey() {
+	derivationChildKey(nil, nil, nil, "")
 }
 
 func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, error) { //TODO: derive address according to the chain type
@@ -676,7 +679,7 @@ func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, err
 		return nil, err
 	}
 	privateKey.Add(privateKey, big.NewInt(0).SetBytes(childPrivateKeySlice[:]))
-	privateKey.Mod(privateKey, tss.S256().Params().N)
+	privateKey.Mod(privateKey, btcec.S256().Params().N)
 
 	privateKeyBytes, err = hex.DecodeString(hbcShare1Str)
 	if err != nil {
@@ -695,9 +698,9 @@ func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, err
 		return nil, err
 	}
 	privateKey.Add(privateKey, big.NewInt(0).SetBytes(childPrivateKeySlice[:]))
-	privateKey.Mod(privateKey, tss.S256().Params().N)
-	pubECPoint := crypto.ScalarBaseMult(tss.S256(), big.NewInt(0).SetBytes(privateKey.Bytes()))
-	publicKey := &ecdsa.PublicKey{X: big.NewInt(0).SetBytes(pubECPoint.X().Bytes()), Y: big.NewInt(0).SetBytes(pubECPoint.Y().Bytes()), Curve: tss.S256()}
+	privateKey.Mod(privateKey, btcec.S256().Params().N)
+	pubECPoint := crypto.ScalarBaseMult(btcec.S256(), big.NewInt(0).SetBytes(privateKey.Bytes()))
+	publicKey := &ecdsa.PublicKey{X: big.NewInt(0).SetBytes(pubECPoint.X().Bytes()), Y: big.NewInt(0).SetBytes(pubECPoint.Y().Bytes()), Curve: btcec.S256()}
 
 	eles := strings.Split("/", hdPath)
 	chainIntStr := eles[2]

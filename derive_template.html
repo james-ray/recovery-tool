@@ -5,34 +5,42 @@
 </head>
 <script src="wasm_exec.js"></script>
 <script>
-
     var base64String = "AAAAAAAAA";
 
-    async function runWasm() {
-        try {
-            const vaultIndex = document.getElementById("vaultIndex").value;
-            const chainInt = document.getElementById("chain").value;
-            const subIndex = document.getElementById("subIndex").value;
+    // 在页面加载完毕后执行
+    window.onload = function() {
+        const go = new Go(); // wasm_exec.js 中的定义
+        const wasmBinary = Uint8Array.from(atob(base64String), c => c.charCodeAt(0));
+        WebAssembly.instantiate(wasmBinary, go.importObject)
+            .then(res => {
+                go.run(res.instance); // 执行 go main 方法
+            });
+    };
 
-            const wasmBinary = Uint8Array.from(atob(base64String), c => c.charCodeAt(0));
-            console.log('vaultIndex:', vaultIndex);
-            console.log('chainInt:', chainInt);
-            console.log('subIndex:', subIndex);
+    function calculate() {
+        const metadata = parseInt(document.getElementById("metadata").value);
+        const walletType = parseInt(document.getElementById("walletType").value);
+        const vaultIndex = parseInt(document.getElementById("vaultIndex").value);
+        const chainInt = parseInt(document.getElementById("chain").value);
+        const subIndex = parseInt(document.getElementById("subIndex").value);
+        console.log(window)
+        const result = window.generateChildExtendedPrivateKey(metadata, walletType, vaultIndex, chainInt, subIndex);
 
-            const go = new Go();
-            const { instance } = await WebAssembly.instantiate(wasmBinary, go.importObject);
-            //go.run(instance);
-            const output1 = instance.exports.hello();
-            console.log('output1:', output1);
-            const output = instance.exports.generateChildExtendedPrivateKey("./metadata.json",  0, vaultIndex, chainInt, subIndex);
-            document.getElementById("output").innerText = "Child Extended Private Key: " + output;
-        } catch (error) {
-            console.error('An error occurred:', error);
-            // Handle the error, e.g., display an error message to the user
-        }
+        // document.getElementById("result").innerHTML = result;
+        document.getElementById("output").innerText = "Child Extended Private Key: " + result;
+        return new Promise(()=>{
+
+        })
     }
 </script>
 <body>
+
+<label for="metadata">Metadata:</label>
+<input type="text" id="metadata"><br>
+
+<label for="walletType">Wallet Type:</label>
+<input type="text" id="walletType"><br>
+
 <label for="vaultIndex">Vault Index:</label>
 <input type="text" id="vaultIndex"><br>
 
@@ -42,7 +50,7 @@
 <label for="subIndex">Sub Index:</label>
 <input type="text" id="subIndex"><br>
 
-<button onclick="runWasm()">Generate Child Extended Private Key</button>
+<button onclick="calculate()">Generate Child Extended Private Key</button>
 <br>
 
 <div id="output"></div>

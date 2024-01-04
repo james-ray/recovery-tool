@@ -19,7 +19,6 @@ require (
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
 	github.com/golang/protobuf v1.5.3
 	github.com/james-ray/hcd v0.0.0-20230524063416-4917c422bd33
-	github.com/ltcsuite/ltcd/btcec/v2 v2.1.0 // indirect
 	github.com/otiai10/primes v0.0.0-20210501021515-f1b2be525a11
 	github.com/pkg/errors v0.9.1
 	github.com/shopspring/decimal v1.3.1
