@@ -27,6 +27,7 @@ func generateChildExtendedPrivateKey(this js.Value, args []js.Value) interface{}
 	fmt.Printf("params: %+v", args)
 	// 实现生成子扩展私钥的逻辑
 	hdPath := fmt.Sprintf("81/%d/%d/%d/%d", int(walletType), int(vaultIndex), int(chainInt), int(subIndex))
+	fmt.Printf("hdPath: %s", hdPath)
 	var metadataMap map[string]string
 	err := json.Unmarshal([]byte(metadataFileStr), &metadataMap)
 	if err != nil {
