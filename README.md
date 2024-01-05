@@ -63,9 +63,10 @@ step3 replaces the content in template html to the real base64 string
 Now you can double click the derive.html.
 
 The text boxes or drop down box in the UI:
-WalletType: Fund Wallet or Api Wallet
+Metadata: Paste the metadata json string in this text box.
+WalletType: Fund Wallet or Api Wallet.
 VaultIndex: If it is Fund Wallet, it starts from 1. Else if it is Api Wallet, this is fixed 0.
-Chain: Choose the destination chain from the list
+Chain: Choose the destination chain from the list.
 SubIndex: If it is Fund Wallet, this is fixed 0. Else if it is Api Wallet, it starts from 1.
 
 ```
