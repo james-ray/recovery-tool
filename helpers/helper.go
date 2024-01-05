@@ -33,9 +33,9 @@ func generateChildExtendedPrivateKey(this js.Value, args []js.Value) interface{}
 	if err != nil {
 		panic(err)
 	}
-	privBytes, err := common.DeriveChildPrivateKey(metadataMap, hdPath)
+	privBytes, addr, err := common.DeriveChildPrivateKey(metadataMap, hdPath)
 	if err != nil {
 		panic(err)
 	}
-	return hex.EncodeToString(privBytes)
+	return "Child Extended Private Key: " + hex.EncodeToString(privBytes) + "\n  Address: " + addr
 }

@@ -612,7 +612,7 @@ func TestDeriveChildPrivateKey() {
 	derivationChildKey(nil, nil, nil, "")
 }
 
-func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, error) { //TODO: derive address according to the chain type
+func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, string, error) { //TODO: derive address according to the chain type
 	userPrivKeyStr, ok := params["user_share"]
 	if !ok {
 		panic("invalid zip file, does not contain user_share")
@@ -632,7 +632,7 @@ func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, err
 	var chainCodes []string
 	err := json.Unmarshal([]byte(chainCodeStr), &chainCodes)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	pubkeyStr, ok := params["pubkeys"]
 	if !ok {
@@ -641,61 +641,61 @@ func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, err
 	var pubkeys []string
 	err = json.Unmarshal([]byte(pubkeyStr), &pubkeys)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	privateKeyBytes, err := hex.DecodeString(userPrivKeyStr)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	chainCodeBytes, err := hex.DecodeString(chainCodes[0])
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	deducePubkeyBytes, err := hex.DecodeString(pubkeys[0])
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	childPrivateKeySlice, _, err := derivationChildKey(privateKeyBytes, deducePubkeyBytes, chainCodeBytes, hdPath)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	privateKey := big.NewInt(0).SetBytes(childPrivateKeySlice[:])
 
 	privateKeyBytes, err = hex.DecodeString(hbcShare0Str)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	chainCodeBytes, err = hex.DecodeString(chainCodes[1])
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	deducePubkeyBytes, err = hex.DecodeString(pubkeys[1])
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	childPrivateKeySlice, _, err = derivationChildKey(privateKeyBytes, deducePubkeyBytes, chainCodeBytes, hdPath)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	privateKey.Add(privateKey, big.NewInt(0).SetBytes(childPrivateKeySlice[:]))
 	privateKey.Mod(privateKey, btcec.S256().Params().N)
 
 	privateKeyBytes, err = hex.DecodeString(hbcShare1Str)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	chainCodeBytes, err = hex.DecodeString(chainCodes[2])
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	deducePubkeyBytes, err = hex.DecodeString(pubkeys[2])
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	childPrivateKeySlice, _, err = derivationChildKey(privateKeyBytes, deducePubkeyBytes, chainCodeBytes, hdPath)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	privateKey.Add(privateKey, big.NewInt(0).SetBytes(childPrivateKeySlice[:]))
 	privateKey.Mod(privateKey, btcec.S256().Params().N)
@@ -706,7 +706,7 @@ func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, err
 	chainIntStr := eles[3] //TODO: 根据资管钱包还是api钱包，这里chain所在的位置是否不同
 	chainInt, err := strconv.Atoi(chainIntStr)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	chainUint32 := uint32(chainInt)
 	var chain string
@@ -734,10 +734,10 @@ func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, err
 	}
 	addr, err := switchChainAddress(publicKey, chain)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	fmt.Printf("priv key is: %x  pubkey x: %x y: %x addr: %s \n", privateKey.Bytes(), pubECPoint.X().Bytes(), pubECPoint.Y().Bytes(), addr)
-	return privateKey.Bytes(), nil
+	return privateKey.Bytes(), addr, nil
 }
 
 func ParseCsv(filePath string) ([]map[string]string, error) {

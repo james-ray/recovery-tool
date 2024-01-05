@@ -49,16 +49,19 @@ This command is used for batch recovering. You can download the csv file from hb
 
 d.Use the UI
 Follow the three steps to generate the derive.html, it is a UI for extended child private key.
-1. GOOS=js GOARCH=wasm go build -tags=osusergo -o recovery-tool.wasm helpers/helper.go
-2. If you are Ubuntu/Linux:  base64 -w 0 recovery-tool.wasm  >  wasmstr.txt
+1. echo $GOROOT    if it is empty,  execute    export GOROOT= where your go install dir
+   cp $GOROOT/misc/wasm/wasm_exec.js .
+2. GOOS=js GOARCH=wasm go build -tags=osusergo -o recovery-tool.wasm helpers/helper.go
+3. If you are Ubuntu/Linux:  base64 -w 0 recovery-tool.wasm  >  wasmstr.txt
    If you are Mac: base64 -b -i recovery-tool.wasm -o wasmstr.txt
-3. awk 'NR==FNR{a[i++]=$0;next} /var base64String = ".*";/{sub(/var base64String = ".*";/, "var base64String = \""a[0]"\";")}1' wasmstr.txt derive_template.html > tmp && mv tmp derive.html
+4. awk 'NR==FNR{a[i++]=$0;next} /var base64String = ".*";/{sub(/var base64String = ".*";/, "var base64String = \""a[0]"\";")}1' wasmstr.txt derive_template.html > tmp && mv tmp derive.html
 You should install awk before execute this step. 
 
 Explain the three steps:
-step1 generates recovery-tool.wasm
-step2 generates the base64 string of recovery-tool.wasm
-step3 replaces the content in template html to the real base64 string, and generates a derive.html file.
+step1 is to move the necessary depencency lib to the project folder
+step2 generates recovery-tool.wasm
+step3 generates the base64 string of recovery-tool.wasm
+step4 replaces the content in template html to the real base64 string, and generates a derive.html file.
 
 Now you can double click the derive.html.
 
