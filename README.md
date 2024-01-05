@@ -58,9 +58,11 @@ You should install awk before execute this step.
 Explain the three steps:
 step1 generates recovery-tool.wasm
 step2 generates the base64 string of recovery-tool.wasm
-step3 replace the content in template html to the real base64 string
+step3 replaces the content in template html to the real base64 string
 
 Now you can double click the derive.html.
+
+The text boxes or drop down box in the UI:
 WalletType: Fund Wallet or Api Wallet
 VaultIndex: If it is Fund Wallet, it starts from 1. Else if it is Api Wallet, this is fixed 0.
 Chain: Choose the destination chain from the list
