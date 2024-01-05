@@ -48,7 +48,7 @@ c.recovery-tool deriveCsvFile [metadataFilePath] [csvFilePath]
 This command is used for batch recovering. You can download the csv file from hbc backend.
 
 d.Use the UI
-Follow the three steps to generate the derive.html, it is a UI for extended child private key.
+Follow the four steps to generate the derive.html, it is a UI for extended child private key.
 1. echo $GOROOT    if it is empty,  execute    export GOROOT= where your go install dir
    cp $GOROOT/misc/wasm/wasm_exec.js .
 2. GOOS=js GOARCH=wasm go build -tags=osusergo -o recovery-tool.wasm helpers/helper.go
@@ -57,7 +57,7 @@ Follow the three steps to generate the derive.html, it is a UI for extended chil
 4. awk 'NR==FNR{a[i++]=$0;next} /var base64String = ".*";/{sub(/var base64String = ".*";/, "var base64String = \""a[0]"\";")}1' wasmstr.txt derive_template.html > tmp && mv tmp derive.html
 You should install awk before execute this step. 
 
-Explain the three steps:
+Explain the four steps:
 step1 is to move the necessary depencency lib to the project folder
 step2 generates recovery-tool.wasm
 step3 generates the base64 string of recovery-tool.wasm
