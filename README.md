@@ -58,7 +58,7 @@ You should install awk before execute this step.
 Explain the three steps:
 step1 generates recovery-tool.wasm
 step2 generates the base64 string of recovery-tool.wasm
-step3 replaces the content in template html to the real base64 string
+step3 replaces the content in template html to the real base64 string, and generates a derive.html file.
 
 Now you can double click the derive.html.
 
