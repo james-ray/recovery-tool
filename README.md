@@ -66,7 +66,7 @@ step4 replaces the content in template html to the real base64 string, and gener
 Now you can double click the derive.html.
 
 The text boxes or drop down box in the UI:
-Metadata: Paste the metadata json string in this text box.
+Metadata: Copy the content in metadata json or the output of parseZipFile, then paste it into this text box.
 WalletType: Fund Wallet or Api Wallet.
 VaultIndex: If it is Fund Wallet, it starts from 1. Else if it is Api Wallet, this is fixed 0.
 Chain: Choose the destination chain from the list.
