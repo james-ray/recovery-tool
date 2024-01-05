@@ -141,8 +141,8 @@ func printUsage() {
 	fmt.Println("eg: recovery-tool makeZipFile './zipTest.zip' '123123' '456456' './public_key.pem' '5ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442c9' '7ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442c9|8ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442c9' '4ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442c9|4ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442ca|4ecd00a8164031b61c7c61578137b83d5c0b57d6dbd8617ece480ec9078442cb' '033669d206967b384d588b366b6400733987befc6604fec764f9fc2d42a3bf7a86|021b491468a9c042e6d4e994c3979df14454cd99e4fc207161a929e719f644540b|02f75cebd23a9ac7e1364d0462be378f09aaf26474eb46cc43bdef5de2817932e5'")
 	fmt.Println("3. recovery-tool parseZipFile [zipFilePath] [userPassphrase] [hbcPassphrase] [privkeyFilePath]")
 	fmt.Println("eg: recovery-tool parseZipFile './zipTest.zip' '123123' '456456' './private_key.pem'")
-	fmt.Println("4. recovery-tool deriveChildPrivateKey [metadataFilePath] [derivePath] [chain]")
-	fmt.Println("eg: recovery-tool deriveChildPrivateKey './metadata.json' '81/0/46/0/0'")
+	fmt.Println("4. recovery-tool deriveChildPrivateKey [metadataFilePath] [derivePath]")
+	fmt.Println("eg: recovery-tool deriveChildPrivateKey './metadata.json' '81/0/1/60/2'")
 	fmt.Println("4. recovery-tool deriveCsvFile [metadataFilePath] [csvFilePath]")
 	fmt.Println("eg: recovery-tool deriveCsvFile './metadata.json' './walletPaths.csv'")
 }

@@ -36,11 +36,34 @@ hbc.encrypted.0/1 and user are private key slices.
 pubkeys is an array of the public key slices.
 chaincodes is also an array.
 
+After you get the metadata plaintext, you can use the following three ways to recover the extended child private key(s).
+
 b.deriveChildPrivateKey
-recovery-tool deriveChildPrivateKey [zipFilePath] [userPassphrase] [hbcPassphrase] [privkeyFilePath] [derivePath]
-eg: recovery-tool deriveChildPrivateKey './zipTest.zip' '123123' '456456' './privkeyFile' '81/0/46/0/0'
+recovery-tool deriveChildPrivateKey [metadataFilePath] [derivePath]
+eg: recovery-tool deriveChildPrivateKey './metadata.json' '81/0/1/60/2'
 
 the derivePath is used for derive the child private key, the path is like '81/0/46/0/0'
 
-I'll update the tool to support batch derivation and add a recovery UI .
+c.recovery-tool deriveCsvFile [metadataFilePath] [csvFilePath]
+This command is used for batch recovering. You can download the csv file from hbc backend.
+
+d.Use the UI
+Follow the three steps to generate the derive.html, it is a UI for extended child private key.
+1. GOOS=js GOARCH=wasm go build -tags=osusergo -o recovery-tool.wasm helpers/helper.go
+2. If you are Ubuntu/Linux:  base64 -w 0 recovery-tool.wasm  >  wasmstr.txt
+   If you are Mac: base64 -b -i recovery-tool.wasm -o wasmstr.txt
+3. awk 'NR==FNR{a[i++]=$0;next} /var base64String = ".*";/{sub(/var base64String = ".*";/, "var base64String = \""a[0]"\";")}1' wasmstr.txt derive_template.html > tmp && mv tmp derive.html
+You should install awk before execute this step. 
+
+Explain the three steps:
+step1 generates recovery-tool.wasm
+step2 generates the base64 string of recovery-tool.wasm
+step3 replace the content in template html to the real base64 string
+
+Now you can double click the derive.html.
+WalletType: Fund Wallet or Api Wallet
+VaultIndex: If it is Fund Wallet, it starts from 1. Else if it is Api Wallet, this is fixed 0.
+Chain: Choose the destination chain from the list
+SubIndex: If it is Fund Wallet, this is fixed 0. Else if it is Api Wallet, it starts from 1.
+
 ```

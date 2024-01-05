@@ -703,7 +703,7 @@ func DeriveChildPrivateKey(params map[string]string, hdPath string) ([]byte, err
 	publicKey := &ecdsa.PublicKey{X: big.NewInt(0).SetBytes(pubECPoint.X().Bytes()), Y: big.NewInt(0).SetBytes(pubECPoint.Y().Bytes()), Curve: btcec.S256()}
 
 	eles := strings.Split(hdPath, "/")
-	chainIntStr := eles[2]
+	chainIntStr := eles[3] //TODO: 根据资管钱包还是api钱包，这里chain所在的位置是否不同
 	chainInt, err := strconv.Atoi(chainIntStr)
 	if err != nil {
 		return nil, err
