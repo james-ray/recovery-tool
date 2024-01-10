@@ -21,7 +21,7 @@ func generateChildExtendedPrivateKey(metadataFilePath string, walletType int, va
 	if err != nil {
 		panic(err)
 	}
-	privBytes, err := common.DeriveChildPrivateKey(metadataMap, hdPath)
+	privBytes, _, err := common.DeriveChildPrivateKey(metadataMap, hdPath)
 	if err != nil {
 		panic(err)
 	}
@@ -99,10 +99,12 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		_, err = common.DeriveChildPrivateKey(metadataMap, os.Args[3])
+		var addr string
+		_, addr, err = common.DeriveChildPrivateKey(metadataMap, os.Args[3])
 		if err != nil {
 			panic(err)
 		}
+		fmt.Printf("derived addr: %s \n", addr)
 	} else if os.Args[1] == "generateKeyPair" {
 		err := common.GenerateRSAKeyPair()
 		if err != nil {
@@ -122,10 +124,11 @@ func main() {
 			panic(err)
 		}
 		for _, r := range records {
-			_, err := common.DeriveChildPrivateKey(metadataMap, r["Path"])
+			_, addr, err := common.DeriveChildPrivateKey(metadataMap, r["Path"])
 			if err != nil {
 				panic(err)
 			}
+			fmt.Printf("derived addr: %s \n", addr)
 		}
 	} else {
 		printUsage()
